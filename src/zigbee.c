@@ -86,6 +86,54 @@ int checksum(unsigned short* frame)
 	return 0xFF - (sum & 0xFF);
 }
 
+int sendFrameType(int serial_fd, int8_t type, char* data, int8_t frame_id, int64_t dest64, int16_t dest16)
+// switch case regarding the frame type
+{
+	char* msg = frame_id;
+	switch (type){
+		case 0x08 : // AT command
+			strcat(msg,(char*) data);
+			
+			int8_t msg_hex [strlen(msg)];
+			str2hex(msg,msg_hex);
+			
+			send(serial_fd,type,msg_hex,size(msg_hex));
+			return 0;
+		
+		case 0x10 : // Transmit request
+			strcat(msg,(char*) dest64);
+			strcat(msg,(char*) dest16);
+			strcat(msg,(char*) 0x0000);
+			strcat(msg,data);
+			
+			int8_t msg_hex [strlen(msg)];
+			str2hex(msg,msg_hex);
+			
+			send(serial_fd,type,msg_hex,size(msg_hex));
+			return 0;
+			
+//		case 0x11 : // Explicit addressing ZigBee command frame
+		
+		case 0x17 : // Remote AT command request
+			strcat(msg,(char*) dest64);
+			strcat(msg,(char*) dest16);
+			strcat(msg,(char*) 0x02);
+			strcat(msg,data);			
+			
+			int8_t msg_hex [strlen(msg)];
+			str2hex(msg,msg_hex);
+			
+			send(serial_fd,type,msg_hex,size(msg_hex));
+			return 0;
+		
+//		case 0x21 : // Create source route
+			
+//		case 0x8A : // Modem status 
+
+	
+	return 0;
+}
+
 int sendAT(int serial_fd, char* reg)
 // send an AT command
 {
@@ -98,7 +146,7 @@ int sendAT(int serial_fd, char* reg)
 	{msg[i] = (unsigned short)reg[i];}
 	
 	
-	send(serial_fd, 8, msg);
+	send(serial_fd, 0x08, msg);
 	
 	receive(serial_fd);
 }
